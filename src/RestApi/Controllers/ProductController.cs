@@ -34,8 +34,7 @@ namespace RestApi.Controllers
         /// <param name="id">Product id</param>
         [HttpGet("productId")]
         [ProducesResponseType(typeof(IEnumerable<Product>), (int)HttpStatusCode.OK)]
-        [ProducesResponseType((int)HttpStatusCode.NoContent)]
-        [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetProductByProductId(Guid id)
         {
             var result = await _productService.GetProductByIdAsync(id);
