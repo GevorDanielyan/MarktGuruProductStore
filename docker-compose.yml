@@ -3,9 +3,13 @@ version: '3.4'
 services:
   restapi:
     image: ${DOCKER_REGISTRY-}restapi
+    #depends_on:
+    #  - "db"
     build:
       context: .
       dockerfile: src/RestApi/Dockerfile
+    #environment:
+    #  - ConnectionStrings__DefaultConnection=User ID=postgres;Password=postgres;Server=local_pgdb;Port=5432;Database=postgres;IntegratedSecurity=true;Pooling=true;
   db:
     image: postgres:latest
     container_name: local_pgdb
@@ -13,8 +17,9 @@ services:
     ports:
       - "54320:5432"
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: admin
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      #POSTGRES_DB: postgres
     volumes:
       - local_pgdata:/var/lib/postgresql/data
   pgadmin:
@@ -24,7 +29,7 @@ services:
     ports:
       - "5050:80"
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin
+      PGADMIN_DEFAULT_EMAIL: gevorgdannielyan@gmail.com
       PGADMIN_DEFAULT_PASSWORD: admin
     volumes:
       - pgadmin-data:/var/lib/pgadmin

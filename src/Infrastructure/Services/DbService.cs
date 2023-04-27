@@ -1,46 +1,67 @@
 ﻿using Dapper;
 using Npgsql;
 using System.Data;
+using Application.Services;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 
 namespace Infrastructure.Services
 {
-    internal sealed class DbService
+    public sealed class DbService : IDbService
     {
-        private readonly IDbConnection _db;
+        private readonly IConfiguration _configuration;
+        private readonly ILogger _logger;
 
-        public DbService(IConfiguration configuration)
+        public DbService(IConfiguration configuration, ILogger<DbService> logger)
         {
-            _db = new NpgsqlConnection(configuration.GetConnectionString("DefaultConnection"));
+            _configuration = configuration;
+            _logger = logger;
         }
 
         public async Task<T> GetAsync<T>(string command, object parms)
         {
-            T result;
-
-            result = (await _db.QueryAsync<T>(command, parms).ConfigureAwait(false)).FirstOrDefault()!;
-
-            return result!;
-
+            try
+            {
+                using IDbConnection connection = new NpgsqlConnection(_configuration.GetConnectionString("DefaultConnection"));
+                return (await connection.QueryAsync<T>(command, parms)
+                    .ConfigureAwait(false))
+                    .FirstOrDefault()!;
+            }
+            catch (Exception error)
+            {
+                _logger.LogError(error, "Error occurred while executing query");
+                throw;
+            }
         }
 
         public async Task<List<T>> GetAll<T>(string command, object parms)
         {
+            try
+            {
+                using IDbConnection connection = new NpgsqlConnection(_configuration.GetConnectionString("DefaultConnection"));
 
-            List<T> result = new();
-
-            result = (await _db.QueryAsync<T>(command, parms)).ToList();
-
-            return result;
+                return (await connection.QueryAsync<T>(command, parms)).ToList();
+            }
+            catch (Exception error)
+            {
+                _logger.LogError(error, "Error occurred while executing query");
+                throw;
+            }
         }
 
         public async Task<int> EditData(string command, object parms)
         {
-            int result;
+            try
+            {
+                using IDbConnection connection = new NpgsqlConnection(_configuration.GetConnectionString("DefaultConnection"));
 
-            result = await _db.ExecuteAsync(command, parms);
-
-            return result;
+                return await connection.ExecuteAsync(command, parms);
+            }
+            catch (Exception error)
+            {
+                _logger.LogError(error, "Error occurred while executing query");
+                throw;
+            }
         }
     }
 }
