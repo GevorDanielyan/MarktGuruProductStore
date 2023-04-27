@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Domain.Entities;
-using System.Threading.Tasks;
-
+﻿using Domain.Entities;
+using Domain.Exceptions.Structs;
+using OneOf;
 
 namespace Application.Services
 {
@@ -22,7 +19,7 @@ namespace Application.Services
         /// <summary>
         /// Get product by Id
         /// </summary>
-        Task<Product> GetProductByIdAsync(Guid id);
+        Task<OneOf<Product, NoSuchProduct>> GetProductByIdAsync(Guid id);
 
         /// <summary>
         /// Update product

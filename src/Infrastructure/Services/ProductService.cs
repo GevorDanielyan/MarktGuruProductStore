@@ -1,54 +1,102 @@
-﻿using Application.Services;
+﻿using OneOf;
 using Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Application.Services;
+using Domain.Exceptions.Structs;
+using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Services
 {
     public sealed class ProductService : IProductService
     {
         private readonly IDbService _dbService;
-        public ProductService(IDbService dbService)
+        private readonly ILogger _logger;
+
+        public ProductService(IDbService dbService, ILogger<ProductService> logger)
         {
             _dbService = dbService;
+            _logger = logger;
         }
 
         public async Task<bool> AddProductAsync(Product product)
         {
-            var result = await _dbService.EditData(
-                "INSERT INTO public.employee (id,name, age, address, mobile_number) VALUES (@Id, @Name, @Age, @Address, @MobileNumber)",
-                product);
-            return true;
+            try
+            {
+                string command = "INSERT INTO public.product (id, name, available, price, description, date_created) VALUES (@Id, @Name, @Available, @Price, @Description, @DateCreated)";
+                var result = await _dbService.EditData(command, product);
+
+                return true;
+            }
+            catch (Exception error)
+            {
+                _logger.LogError("Error occured when trying to insert new product", error);
+                throw;
+            }
         }
 
         public async Task<bool> DeleteProductAsync(Guid id)
         {
-            var deleteProduct = await _dbService.EditData("DELETE FROM public.employee WHERE id=@Id", new { id });
-            return true;
+            try
+            {
+                string command = "DELETE FROM public.product WHERE id=@Id";
+                var deleteProduct = await _dbService.EditData(command, new { id });
+                return true;
+            }
+            catch (Exception error)
+            {
+                _logger.LogError("Error occured when trying to delete product", error);
+                throw;
+            }
         }
 
-        public async Task<Product> GetProductByIdAsync(Guid id)
+        public async Task<OneOf<Product, NoSuchProduct>> GetProductByIdAsync(Guid id)
         {
-            var productList = await _dbService.GetAsync<Product>("SELECT * FROM public.employee where id=@id", new { id });
-            return productList;
+            try
+            {
+                string command = "SELECT * FROM public.product where id=@id";
+                var product = await _dbService.GetAsync<Product>(command, new { id });
+                if (product is null)
+                {
+                    return new NoSuchProduct(id);
+                }
+                return product;
+            }
+            catch (Exception error)
+            {
+                _logger.LogError("Error occured while trying to get product by id", error);
+                throw;
+            }
         }
 
         public async Task<IEnumerable<Product>> GetProductListAsync()
         {
-            var productList = await _dbService.GetAll<Product>("SELECT * FROM public.product", new { });
-            return productList;
+            try
+            {
+                string command = "SELECT * FROM public.product";
+                var products = await _dbService.GetAll<Product>(command, new { });
+
+                return products;
+            }
+            catch (Exception error)
+            {
+                _logger.LogError("Error occured while trying to get product list", error);
+                throw;
+            }
+
         }
 
         public async Task<Product> UpdateProductAsync(Product product)
         {
-            var updateProdut =
-            await _dbService.EditData(
-                "Update public.employee SET name=@Name, age=@Age, address=@Address, mobile_number=@MobileNumber WHERE id=@Id",
-                product);
-            return product;
+            try
+            {
+                var result = await _dbService.EditData("Update public.product SET name=@Name, price=@Price, available=@Available, description=@Description WHERE id=@Id", product);
+                return product;
+            }
+            catch (Exception error)
+            {
+                _logger.LogError("Error occured while trying to update product", error);
+                throw;
+            }
+
         }
     }
 }

@@ -1,6 +1,10 @@
 ﻿using Application.Services;
+using Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using RestApi.Models;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Net;
 
 namespace RestApi.Controllers
 {
@@ -15,11 +19,31 @@ namespace RestApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get()
+        [ProducesResponseType(typeof(IEnumerable<Product>), 200)]
+        public async Task<IActionResult> GetProducts()
         {
             var result = await _productService.GetProductListAsync();
 
             return Ok(result);
+        }
+
+        
+        /// <summary>
+        /// Get product by given product id
+        /// </summary>
+        /// <param name="id">Product id</param>
+        [HttpGet("productId")]
+        [ProducesResponseType(typeof(IEnumerable<Product>), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NoContent)]
+        [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
+        public async Task<IActionResult> GetProductByProductId(Guid id)
+        {
+            var result = await _productService.GetProductByIdAsync(id);
+
+            return result.Match<IActionResult>(
+                Ok,
+                noSuchProduct => NotFound(new ErrorResponse(noSuchProduct.Message)));
+
         }
     }
 }
