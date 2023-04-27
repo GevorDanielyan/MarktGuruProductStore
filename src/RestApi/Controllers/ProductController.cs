@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Application.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace RestApi.Controllers
@@ -7,11 +8,18 @@ namespace RestApi.Controllers
     [ApiController]
     public class ProductController : ControllerBase
     {
-        public ProductController()
+        private readonly IProductService _productService;
+        public ProductController(IProductService productService)
         {
-            
+            _productService = productService;
         }
 
-        
+        [HttpGet]
+        public async Task<IActionResult> Get()
+        {
+            var result = await _productService.GetProductListAsync();
+
+            return Ok(result);
+        }
     }
 }
