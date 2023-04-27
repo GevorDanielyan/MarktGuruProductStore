@@ -1,9 +1,7 @@
 ﻿using Application.Services;
 using Domain.Entities;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RestApi.Models;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Net;
 
 namespace RestApi.Controllers
