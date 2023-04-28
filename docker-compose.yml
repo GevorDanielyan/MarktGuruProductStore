@@ -3,13 +3,13 @@ version: '3.4'
 services:
   restapi:
     image: ${DOCKER_REGISTRY-}restapi
-    #depends_on:
-    #  - "db"
+    depends_on:
+      - "db"
     build:
       context: .
       dockerfile: src/RestApi/Dockerfile
-    #environment:
-    #  - ConnectionStrings__DefaultConnection=User ID=postgres;Password=postgres;Server=local_pgdb;Port=5432;Database=postgres;IntegratedSecurity=true;Pooling=true;
+    environment:
+      - ConnectionStrings__DefaultConnection=User ID=postgres;Password=postgres;Server=local_pgdb;Port=5432;Database=postgres;IntegratedSecurity=true;Pooling=true;
   db:
     image: postgres:latest
     container_name: local_pgdb

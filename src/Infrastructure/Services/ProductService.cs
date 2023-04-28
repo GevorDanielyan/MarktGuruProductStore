@@ -3,6 +3,7 @@ using Domain.Entities;
 using Application.Services;
 using Domain.Exceptions.Structs;
 using Microsoft.Extensions.Logging;
+using OneOf.Types;
 
 namespace Infrastructure.Services
 {
@@ -33,13 +34,13 @@ namespace Infrastructure.Services
             }
         }
 
-        public async Task<bool> DeleteProductAsync(Guid id)
+        public async Task<OneOf<Success, NoSuchProduct>> DeleteProductAsync(Guid id)
         {
             try
             {
                 string command = "DELETE FROM public.product WHERE id=@Id";
                 var deleteProduct = await _dbService.EditData(command, new { id });
-                return true;
+                return new Success();
             }
             catch (Exception error)
             {
