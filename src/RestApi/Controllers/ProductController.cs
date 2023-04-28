@@ -1,8 +1,9 @@
-﻿using Application.Services;
-using Domain.Entities;
-using Microsoft.AspNetCore.Mvc;
+﻿using System.Net;
+using OneOf.Types;
 using RestApi.Models;
-using System.Net;
+using Domain.Entities;
+using Application.Services;
+using Microsoft.AspNetCore.Mvc;
 
 namespace RestApi.Controllers
 {
@@ -41,6 +42,27 @@ namespace RestApi.Controllers
                 Ok,
                 noSuchProduct => NotFound(new ErrorResponse(noSuchProduct.Message)));
 
+        }
+
+        /// <summary>
+        /// Delete product by given product id
+        /// </summary>
+        /// <param name="id">Product id</param>
+        [HttpDelete]
+        [ProducesResponseType(typeof(Success), (int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> DeleteProduct(Guid id)
+        {
+            var result = await _productService.GetProductByIdAsync(id);
+
+            return await result.Match<Task<IActionResult>>(
+                async product =>
+                {
+                    var result = await _productService.DeleteProductAsync(id);
+                    
+                    return Ok(result.IsT0);
+                },
+                noSuchProduct => Task.FromResult<IActionResult>(NotFound(new ErrorResponse(noSuchProduct.Message))));
         }
     }
 }

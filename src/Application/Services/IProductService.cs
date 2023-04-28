@@ -1,6 +1,7 @@
 ﻿using Domain.Entities;
 using Domain.Exceptions.Structs;
 using OneOf;
+using OneOf.Types;
 
 namespace Application.Services
 {
@@ -29,6 +30,6 @@ namespace Application.Services
         /// <summary>
         /// Delete product by product Id
         /// </summary>
-        Task<bool> DeleteProductAsync(Guid id);
+        Task<OneOf<Success, NoSuchProduct>> DeleteProductAsync(Guid id);
     }
 }
