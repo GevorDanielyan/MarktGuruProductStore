@@ -10,7 +10,7 @@ namespace Application.Services
         /// <summary>
         /// Add new product
         /// </summary>
-        Task<bool> AddProductAsync(Product product);
+        Task<OneOf<Success, AlreadyExistedProduct>> AddProductAsync(string name, double price, bool available, string description);
         
         /// <summary>
         /// Get all products

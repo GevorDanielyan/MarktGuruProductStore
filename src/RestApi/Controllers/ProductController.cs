@@ -17,6 +17,9 @@ namespace RestApi.Controllers
             _productService = productService;
         }
 
+        /// <summary>
+        /// Get list of products
+        /// </summary>
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<Product>), 200)]
         public async Task<IActionResult> GetProducts()
@@ -48,7 +51,7 @@ namespace RestApi.Controllers
         /// Delete product by given product id
         /// </summary>
         /// <param name="id">Product id</param>
-        [HttpDelete]
+        [HttpDelete("productId")]
         [ProducesResponseType(typeof(Success), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
         public async Task<IActionResult> DeleteProduct(Guid id)
@@ -63,6 +66,36 @@ namespace RestApi.Controllers
                     return Ok(result.IsT0);
                 },
                 noSuchProduct => Task.FromResult<IActionResult>(NotFound(new ErrorResponse(noSuchProduct.Message))));
+        }
+
+        /// <summary>
+        /// Add new product
+        /// </summary>
+        /// <param name="request">Product creation request</param>
+        [HttpPost]
+        [ProducesResponseType((int)HttpStatusCode.Created)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> AddProduct([FromBody] ProductCreationRequest request)
+        {
+            if (request is null 
+                || string.IsNullOrWhiteSpace(request.Name) 
+                || request.Price <= 0)
+            {
+                return BadRequest();
+            }
+
+            var result = await _productService.AddProductAsync(request.Name,
+                request.Price,
+                request.Available,
+                request.Description ?? string.Empty);
+
+            return result.Match<IActionResult>(
+                product =>
+                {
+                    return CreatedAtAction(nameof(GetProducts), request);
+                },
+                alreadyExist => NotFound(new ErrorResponse(alreadyExist.Message)));
         }
     }
 }
