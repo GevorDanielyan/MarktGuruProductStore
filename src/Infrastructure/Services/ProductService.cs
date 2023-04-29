@@ -1,9 +1,9 @@
 ﻿using OneOf;
+using OneOf.Types;
 using Domain.Entities;
 using Application.Services;
 using Domain.Exceptions.Structs;
 using Microsoft.Extensions.Logging;
-using OneOf.Types;
 
 namespace Infrastructure.Services
 {
@@ -18,14 +18,22 @@ namespace Infrastructure.Services
             _logger = logger;
         }
 
-        public async Task<bool> AddProductAsync(Product product)
+        public async Task<OneOf<Success, AlreadyExistedProduct>> AddProductAsync(string name, double price, bool available, string? description)
         {
             try
             {
-                string command = "INSERT INTO public.product (id, name, available, price, description, date_created) VALUES (@Id, @Name, @Available, @Price, @Description, @DateCreated)";
-                var result = await _dbService.EditData(command, product);
+                string command = "SELECT * FROM public.product WHERE name = @Name";
 
-                return true;
+                // Checking if a product with the same name already exists
+                var existingProduct = await _dbService.GetAsync<Product>(command, new { name });
+                if (existingProduct is not null)
+                {
+                    return new AlreadyExistedProduct(name);
+                }
+                command = "INSERT INTO public.product (name, available, price, description) VALUES (@Name, @Available, @Price, @Description)";
+                var result = await _dbService.EditData(command, new { Name = name, Available = available, Price = price, Description = description });
+
+                return new Success();
             }
             catch (Exception error)
             {
