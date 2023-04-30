@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Services
 {
-    public sealed class ProductService : IProductService
+    internal sealed class ProductService : IProductService
     {
         private readonly IDbService _dbService;
         private readonly ILogger _logger;
@@ -18,7 +18,10 @@ namespace Infrastructure.Services
             _logger = logger;
         }
 
-        public async Task<OneOf<Success, AlreadyExistedProduct>> AddProductAsync(string name, double price, bool available, string? description)
+        public async Task<OneOf<Success, AlreadyExistedProduct>> AddProductAsync(string name, 
+            double price, 
+            bool available, 
+            string? description)
         {
             try
             {
@@ -28,6 +31,7 @@ namespace Infrastructure.Services
                 var existingProduct = await _dbService.GetAsync<Product>(command, new { name });
                 if (existingProduct is not null)
                 {
+                    _logger.LogError("Product already existing");
                     return new AlreadyExistedProduct(name);
                 }
                 command = "INSERT INTO public.product (name, available, price, description) VALUES (@Name, @Available, @Price, @Description)";
@@ -65,6 +69,7 @@ namespace Infrastructure.Services
                 var product = await _dbService.GetAsync<Product>(command, new { id });
                 if (product is null)
                 {
+                    _logger.LogError("No such product");
                     return new NoSuchProduct(id);
                 }
                 return product;
@@ -93,19 +98,47 @@ namespace Infrastructure.Services
 
         }
 
-        public async Task<Product> UpdateProductAsync(Product product)
+        public async Task<OneOf<Product, NoSuchProduct, AlreadyExistedProduct>> UpdateProductAsync(Guid id,
+            string name, 
+            double price, 
+            bool available, 
+            string? description)
         {
             try
             {
-                var result = await _dbService.EditData("Update public.product SET name=@Name, price=@Price, available=@Available, description=@Description WHERE id=@Id", product);
-                return product;
+                string command = "SELECT * FROM public.product WHERE id=@Id";
+
+                // Retrieve product by Id
+                var existingProduct = await _dbService.GetAsync<Product>(command, new { Id = id });
+
+                // If product doesn't exist, return NoSuchProduct error
+                if (existingProduct is null)
+                {
+                    _logger.LogError("No such product");
+                    return new NoSuchProduct(id);
+                }
+
+                // Checking if exist product with provided name, name is unique
+                if (name == existingProduct.Name)
+                {
+                    _logger.LogError("Product already existing");
+                    return new AlreadyExistedProduct(name);
+                }
+
+                command = "UPDATE public.product SET name=@Name, price=@Price, available=@Available, description=@Description WHERE id=@Id";
+
+                _ = await _dbService.EditData(command, new { Id = id, Name = name, Price = price, Available = available, Description = description });
+
+                // Retrieving the updated product and return it
+                command = "SELECT * FROM public.product WHERE id=@Id";
+                var updatedProduct = await _dbService.GetAsync<Product>(command, new { Id = id });
+                return updatedProduct;
             }
             catch (Exception error)
             {
                 _logger.LogError("Error occured while trying to update product", error);
                 throw;
             }
-
         }
     }
 }
