@@ -97,5 +97,30 @@ namespace RestApi.Controllers
                 },
                 alreadyExist => NotFound(new ErrorResponse(alreadyExist.Message)));
         }
+
+        [HttpPut("productId")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [ProducesResponseType((int)HttpStatusCode.BadRequest)]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> UpdateProduct([FromRoute] Guid id, 
+            UpdateProductRequest request)
+        {
+            if (request is null
+                || string.IsNullOrWhiteSpace(request.Name)
+                || request.Price <= 0)
+            {
+                return BadRequest();
+            }
+            var result = await _productService.UpdateProductAsync(id,
+                request.Name, 
+                request.Price, 
+                request.Available, 
+                request.Description);
+
+            return result.Match<IActionResult>(
+                Ok,
+                noSuchProduct => NotFound(new ErrorResponse(noSuchProduct.Message)),
+                alreadyExist => BadRequest(new ErrorResponse(alreadyExist.Message)));
+        }
     }
 }

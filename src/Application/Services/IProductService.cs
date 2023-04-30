@@ -1,7 +1,7 @@
-﻿using Domain.Entities;
-using Domain.Exceptions.Structs;
-using OneOf;
+﻿using OneOf;
 using OneOf.Types;
+using Domain.Entities;
+using Domain.Exceptions.Structs;
 
 namespace Application.Services
 {
@@ -25,7 +25,7 @@ namespace Application.Services
         /// <summary>
         /// Update product
         /// </summary>
-        Task<Product> UpdateProductAsync(Product product);
+        Task<OneOf<Product, NoSuchProduct, AlreadyExistedProduct>> UpdateProductAsync(Guid id, string name, double price, bool available, string? description);
 
         /// <summary>
         /// Delete product by product Id

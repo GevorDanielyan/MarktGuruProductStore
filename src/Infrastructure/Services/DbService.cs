@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Infrastructure.Services
 {
-    public sealed class DbService : IDbService
+    internal sealed class DbService : IDbService
     {
         private readonly IConfiguration _configuration;
         private readonly ILogger _logger;
