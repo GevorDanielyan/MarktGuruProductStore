@@ -5,11 +5,19 @@ services:
     image: ${DOCKER_REGISTRY-}restapi
     depends_on:
       - "db"
+      - "redis"
     build:
       context: .
       dockerfile: src/RestApi/Dockerfile
     environment:
       - ConnectionStrings__DefaultConnection=User ID=postgres;Password=postgres;Server=local_pgdb;Port=5432;Database=postgres;IntegratedSecurity=true;Pooling=true;
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+
   db:
     image: postgres:latest
     container_name: local_pgdb
