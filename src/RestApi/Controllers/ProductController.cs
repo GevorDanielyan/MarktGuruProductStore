@@ -4,6 +4,7 @@ using RestApi.Models;
 using Domain.Entities;
 using Application.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 
 namespace RestApi.Controllers
 {
@@ -12,15 +13,19 @@ namespace RestApi.Controllers
     public class ProductController : ControllerBase
     {
         private readonly IProductService _productService;
-        public ProductController(IProductService productService)
+        private readonly IOutputCacheStore _outputCacheStore;
+
+        public ProductController(IProductService productService, IOutputCacheStore outputCacheStore)
         {
             _productService = productService;
+            _outputCacheStore = outputCacheStore;
         }
 
         /// <summary>
         /// Get list of products
         /// </summary>
         [HttpGet]
+        [OutputCache(Duration = 120)]
         [ProducesResponseType(typeof(IEnumerable<Product>), 200)]
         public async Task<IActionResult> GetProducts()
         {
@@ -35,6 +40,7 @@ namespace RestApi.Controllers
         /// </summary>
         /// <param name="id">Product id</param>
         [HttpGet("productId")]
+        [OutputCache(Duration = 120)]
         [ProducesResponseType(typeof(IEnumerable<Product>), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
         public async Task<IActionResult> GetProductByProductId(Guid id)
@@ -52,9 +58,10 @@ namespace RestApi.Controllers
         /// </summary>
         /// <param name="id">Product id</param>
         [HttpDelete("productId")]
+        [OutputCache(Duration = 60)]
         [ProducesResponseType(typeof(Success), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
-        public async Task<IActionResult> DeleteProduct(Guid id)
+        public async Task<IActionResult> DeleteProduct(Guid id, CancellationToken cancellation)
         {
             var result = await _productService.GetProductByIdAsync(id);
 
@@ -62,7 +69,8 @@ namespace RestApi.Controllers
                 async product =>
                 {
                     var result = await _productService.DeleteProductAsync(id);
-                    
+                    await _outputCacheStore.EvictByTagAsync("tag-all", cancellation);
+
                     return Ok(result.IsT0);
                 },
                 noSuchProduct => Task.FromResult<IActionResult>(NotFound(new ErrorResponse(noSuchProduct.Message))));
@@ -73,10 +81,12 @@ namespace RestApi.Controllers
         /// </summary>
         /// <param name="request">Product creation request</param>
         [HttpPost]
+        [OutputCache(Duration = 60)]
         [ProducesResponseType((int)HttpStatusCode.Created)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
-        public async Task<IActionResult> AddProduct([FromBody] ProductCreationRequest request)
+        public async Task<IActionResult> AddProduct([FromBody] ProductCreationRequest request, 
+            CancellationToken cancellation)
         {
             if (request is null 
                 || string.IsNullOrWhiteSpace(request.Name) 
@@ -90,6 +100,8 @@ namespace RestApi.Controllers
                 request.Available,
                 request.Description ?? string.Empty);
 
+            await _outputCacheStore.EvictByTagAsync("tag-all", cancellation);
+
             return result.Match<IActionResult>(
                 product =>
                 {
@@ -98,12 +110,17 @@ namespace RestApi.Controllers
                 alreadyExist => NotFound(new ErrorResponse(alreadyExist.Message)));
         }
 
+        /// <summary>
+        /// Updates product
+        /// </summary>
+        /// <param name="id">product id</param>
         [HttpPut("productId")]
+        [OutputCache(Duration = 60)]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
-        public async Task<IActionResult> UpdateProduct([FromRoute] Guid id, 
-            UpdateProductRequest request)
+        public async Task<IActionResult> UpdateProduct(Guid id, 
+            UpdateProductRequest request, CancellationToken cancellation)
         {
             if (request is null
                 || string.IsNullOrWhiteSpace(request.Name)
@@ -116,6 +133,8 @@ namespace RestApi.Controllers
                 request.Price, 
                 request.Available, 
                 request.Description);
+
+            await _outputCacheStore.EvictByTagAsync("tag-all", cancellation);
 
             return result.Match<IActionResult>(
                 Ok,
