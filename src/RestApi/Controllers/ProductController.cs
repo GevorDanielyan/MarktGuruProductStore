@@ -5,6 +5,7 @@ using Domain.Entities;
 using Application.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RestApi.Controllers
 {
@@ -58,6 +59,7 @@ namespace RestApi.Controllers
         /// </summary>
         /// <param name="id">Product id</param>
         [HttpDelete("productId")]
+        [Authorize]
         [OutputCache(Duration = 60)]
         [ProducesResponseType(typeof(Success), (int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.NotFound)]
@@ -81,6 +83,7 @@ namespace RestApi.Controllers
         /// </summary>
         /// <param name="request">Product creation request</param>
         [HttpPost]
+        [Authorize]
         [OutputCache(Duration = 60)]
         [ProducesResponseType((int)HttpStatusCode.Created)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
@@ -115,6 +118,7 @@ namespace RestApi.Controllers
         /// </summary>
         /// <param name="id">product id</param>
         [HttpPut("productId")]
+        [Authorize]
         [OutputCache(Duration = 60)]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
