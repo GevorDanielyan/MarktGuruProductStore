@@ -70,5 +70,6 @@ namespace RestApi.Infrastructure
                 });
             return services;
         }
+
     }
 }
