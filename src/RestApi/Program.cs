@@ -1,10 +1,7 @@
-using Infrastructure.Extensions;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using RestApi.Infrastructure;
-using RestApi.Infrastructure.Caching.Extensions;
 using StackExchange.Redis;
-using System.Text;
+using RestApi.Infrastructure;
+using Infrastructure.Extensions;
+using RestApi.Infrastructure.Caching.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,8 +14,9 @@ builder.Services.AddSwaggerServices();
 builder.Services.AddProductService();
 builder.Services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect("redis"));
 
-builder.Services.AddAuthenticationServices();
 builder.Services.AddRedisOutputCache();
+builder.Services.AddFluentMigratorServices(builder.Configuration);
+builder.Services.AddAuthenticationServices();
 
 var app = builder.Build();
 
@@ -33,5 +31,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.Migrate();
 
 app.Run();
